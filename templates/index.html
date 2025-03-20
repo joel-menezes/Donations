@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giannantonio Fundraiser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .thermometer-container {
+            margin: 20px 0;
+            background: #e0e0e0;
+            height: 30px;
+            width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        .thermometer-fill {
+            height: 100%;
+
+            width: {
+                    {
+                    percentage
+                }
+            }
+
+            %;
+            background: linear-gradient(to right, #ff4b5c, #ff7b7b);
+            transition: width 0.5s ease-in-out;
+        }
+
+        form {
+            margin: 20px 0;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        input {
+            width: 70%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .donation-list {
+            text-align: left;
+            padding: 0;
+            list-style: none;
+        }
+
+        .donation-list li {
+            background: #f1f1f1;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edit-btn {
+            cursor: pointer;
+            font-weight: bold;
+            color: gray;
+            padding: 5px;
+        }
+
+        .edit-btn:hover {
+            color: black;
+        }
+
+        .notice {
+            font-size: 12px;
+            color: red;
+        }
+
+        /* Centered and properly aligned modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: left;
+        }
+
+        .modal input,
+        .modal button {
+            display: block;
+            width: 90%;
+            margin: 5px 0;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .modal .close {
+            background: red;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Fundraiser for Giannantonio</h1>
+        <p><strong>Goal:</strong> ${{ goal }}</p>
+        <p><strong>Raised:</strong> ${{ total }}</p>
+
+        <div class="thermometer-container">
+            <div class="thermometer-fill" style="width: {{ percentage }}%;"></div>
+        </div>
+
+        <p><strong>Latest Donor:</strong> {{ latest_donor }} ({{ latest_company }})</p>
+
+        <h2>Add a Donation</h2>
+        <p class="notice">Recommended: Use the same password every time. Can be left blank.</p>
+        <form method="post">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="text" name="company" placeholder="Company (Optional)">
+            <input type="number" name="amount" placeholder="Amount ($)" step="0.01" required>
+            <input type="password" name="password" placeholder="Password (Optional)">
+            <button type="submit">Donate</button>
+        </form>
+
+        <h2>Donations</h2>
+        <ul class="donation-list">
+            {% for entry in entries %}
+            <li>
+                <span><strong>{{ entry.name }}</strong> ({{ entry.company if entry.company else "N/A" }}) - ${{
+                    entry.amount }}</span>
+                <span class="edit-btn"
+                    onclick="showEditModal('{{ entry.id }}', '{{ entry.name }}', '{{ entry.company }}', '{{ entry.amount }}')">⋮</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <h3>Edit Donation</h3>
+        <input type="hidden" id="edit-id">
+        <label>Name:</label>
+        <input type="text" id="edit-name">
+        <label>Company:</label>
+        <input type="text" id="edit-company">
+        <label>Amount:</label>
+        <input type="number" id="edit-amount" step="0.01">
+        <label>Password:</label>
+        <input type="password" id="edit-password">
+        <button onclick="saveChanges()">Save Changes</button>
+        <button onclick="deleteDonation()">OR Delete</button>
+        <button class="close" onclick="closeModal()">Cancel</button>
+    </div>
+
+    <script>
+        let selectedDonationId = null;
+
+        function showEditModal(id, name, company, amount) {
+            selectedDonationId = id;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-company').value = company;
+            document.getElementById('edit-amount').value = amount;
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
+        function saveChanges() {
+            let data = {
+                id: selectedDonationId,
+                name: document.getElementById('edit-name').value,
+                company: document.getElementById('edit-company').value,
+                amount: document.getElementById('edit-amount').value,
+                password: document.getElementById('edit-password').value
+            };
+
+            fetch(`/edit`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => location.reload());
+        }
+
+        function deleteDonation() {
+            fetch(`/delete/${selectedDonationId}`, {
+                method: 'POST',
+                body: JSON.stringify({ password: document.getElementById('edit-password').value }),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => location.reload());
+        }
+    </script>
+</body>
+
+</html>
