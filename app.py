@@ -8,7 +8,7 @@ import os
 app = Flask(__name__)
 
 # Firebase Admin SDK setup
-cred = credentials.Certificate("etc/secrets/firebase.json")
+cred = credentials.Certificate("/etc/secrets/firebase.json")
 firebase_admin.initialize_app(cred, {
     "databaseURL": "https://giannantonio-fundraiser-default-rtdb.firebaseio.com/"  # Replace with your DB URL
 })
